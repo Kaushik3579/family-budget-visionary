@@ -8,7 +8,14 @@ import { motion } from "framer-motion";
 import { useToast } from "../hooks/use-toast";
 import { X } from "lucide-react";
 
-export const CreateScenario = ({ scenarios, setScenarios, onClose }) => {
+export const CreateScenario = ({ 
+  monthlyIncome, 
+  baseExpenses, 
+  savingsGoal, 
+  scenarios, 
+  setScenarios, 
+  onClose 
+}) => {
   const [name, setName] = useState("");
   const [eventCost, setEventCost] = useState("");
   const [monthsToSave, setMonthsToSave] = useState("");
@@ -25,16 +32,39 @@ export const CreateScenario = ({ scenarios, setScenarios, onClose }) => {
     }
 
     const requiredMonthlySavings = parseFloat(eventCost) / parseFloat(monthsToSave);
+    const totalExpenses = Object.values(baseExpenses).reduce((sum, amount) => sum + amount, 0);
+    const currentSavings = monthlyIncome - totalExpenses;
+    const adjustedSavingsGoal = savingsGoal + requiredMonthlySavings;
 
-    const scenario = {
-      name,
-      eventCost: parseFloat(eventCost),
-      monthsToSave: parseInt(monthsToSave),
-      requiredMonthlySavings,
-      recommendation: `You need to save $${requiredMonthlySavings.toFixed(2)} per month for ${monthsToSave} months to achieve this goal.`
-    };
+    let scenarioResult;
+    if (currentSavings >= requiredMonthlySavings) {
+      scenarioResult = {
+        eventCost: parseFloat(eventCost),
+        monthsToSave: parseInt(monthsToSave),
+        requiredMonthlySavings,
+        adjustedSavingsGoal,
+        savings: currentSavings,
+        savingsDeficit: Math.max(0, adjustedSavingsGoal - currentSavings),
+        recommendation: `✅ You can afford this event by saving an additional $${requiredMonthlySavings.toFixed(2)} per month.`
+      };
+    } else {
+      const savingsDeficit = requiredMonthlySavings - currentSavings;
+      scenarioResult = {
+        eventCost: parseFloat(eventCost),
+        monthsToSave: parseInt(monthsToSave),
+        requiredMonthlySavings,
+        adjustedSavingsGoal,
+        savings: currentSavings,
+        savingsDeficit,
+        recommendation: `⚠ You cannot afford this event with your current budget. You need to save an additional $${savingsDeficit.toFixed(2)} per month. Consider reducing expenses or increasing income.`
+      };
+    }
 
-    setScenarios([...scenarios, scenario]);
+    setScenarios({
+      ...scenarios,
+      [name]: scenarioResult
+    });
+
     toast({
       title: "Scenario Created",
       description: `The scenario "${name}" has been created successfully`,

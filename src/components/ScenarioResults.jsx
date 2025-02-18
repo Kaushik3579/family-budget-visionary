@@ -13,10 +13,11 @@ import { motion } from "framer-motion";
 const COLORS = ["#10B981", "#F59E0B", "#EF4444"];
 
 export const ScenarioResults = ({ scenarios }) => {
-  const scenarioData = scenarios.map((scenario) => ({
-    name: scenario.name,
-    monthlySavings: scenario.requiredMonthlySavings,
-    totalCost: scenario.eventCost,
+  const scenarioData = Object.entries(scenarios).map(([name, data]) => ({
+    name,
+    requiredSavings: data.requiredMonthlySavings,
+    currentSavings: data.savings,
+    deficit: data.savingsDeficit
   }));
 
   return (
@@ -35,24 +36,39 @@ export const ScenarioResults = ({ scenarios }) => {
               <YAxis />
               <Tooltip />
               <Bar 
-                dataKey="monthlySavings" 
+                dataKey="requiredSavings" 
                 fill={COLORS[0]} 
-                name="Monthly Savings Required" 
+                name="Required Monthly Savings" 
+              />
+              <Bar 
+                dataKey="currentSavings" 
+                fill={COLORS[1]} 
+                name="Current Savings" 
+              />
+              <Bar 
+                dataKey="deficit" 
+                fill={COLORS[2]} 
+                name="Savings Deficit" 
               />
             </BarChart>
           </ResponsiveContainer>
         </div>
         <div className="mt-4 space-y-2">
-          {scenarios.map((scenario, index) => (
+          {Object.entries(scenarios).map(([name, scenario], index) => (
             <div key={index} className="p-3 bg-secondary rounded-lg">
               <div className="flex justify-between items-center">
-                <span className="font-medium">{scenario.name}</span>
+                <span className="font-medium">{name}</span>
                 <span className="text-sm text-primary">
                   ${scenario.requiredMonthlySavings.toFixed(2)}/month
                 </span>
               </div>
               <div className="text-sm text-muted-foreground mt-1">
                 {scenario.recommendation}
+              </div>
+              <div className="text-sm text-muted-foreground mt-1">
+                Total Cost: ${scenario.eventCost.toFixed(2)} | 
+                Months: {scenario.monthsToSave} | 
+                Deficit: ${scenario.savingsDeficit.toFixed(2)}
               </div>
             </div>
           ))}
